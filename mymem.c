@@ -10,7 +10,7 @@
  * You may change this to fit your implementation.
  */
 
-struct memoryList
+typedef struct memoryList
 {
   // doubly-linked list
   struct memoryList *prev;
@@ -20,7 +20,7 @@ struct memoryList
   char alloc;          // 1 if this block is allocated,
                        // 0 if this block is free.
   void *ptr;           // location of block in memory pool.
-};
+} MemList;
 
 strategies myStrategy = NotSet;    // Current strategy
 
@@ -28,10 +28,10 @@ strategies myStrategy = NotSet;    // Current strategy
 size_t mySize;
 void *myMemory = NULL;
 
-static struct memoryList *head;
-static struct memoryList *tail;
-static struct memoryList *next;
-
+static MemList *head;
+static MemList *tail;
+static MemList *next;
+static MemList *initialMem;
 
 /* initmem must be called prior to mymalloc and myfree.
 
@@ -63,7 +63,49 @@ void initmem(strategies strategy, size_t sz)
 	
 	/* TODO: Initialize memory management structure. */
 
+    // allocate memory to struct
+    initialMem = myMemory;
 
+    // initialize values
+    initialMem->size = (int) sz;
+    initialMem->alloc = 0;
+    initialMem->next = NULL;
+    initialMem->prev = NULL;
+    initialMem->ptr = head;
+
+    // initialize pointers
+    head = initialMem;
+    tail = initialMem;
+    next = NULL;
+
+}
+
+void allocatemem(MemList *o_struct, size_t insertSize) {
+    o_struct->alloc = 1;
+
+    if(o_struct->size == insertSize) { // it is a perfect fit
+        return;
+    } else if (o_struct->size == mySize) {
+        // In the case that this is the first time to allocate memory
+
+        // create new struct
+        MemList *n_struct = malloc(insertSize);
+
+        // initialize n_struct data
+        n_struct->next = NULL;
+        n_struct->prev = o_struct;
+        n_struct->size = o_struct->size - (int) insertSize;
+        n_struct->alloc = 0;
+        n_struct->ptr = o_struct->next;
+
+        // update o_struct next pointer
+        o_struct->next = n_struct;
+
+        // update global head, tail and next pointers
+        head = o_struct;
+        tail = n_struct;
+        next = n_struct;
+    }
 }
 
 /* Allocate a block of memory with the requested size.
@@ -91,7 +133,6 @@ void *mymalloc(size_t requested)
 	  }
 	return NULL;
 }
-
 
 /* Frees a block of memory previously allocated by mymalloc. */
 void myfree(void* block)
@@ -258,5 +299,25 @@ void try_mymem(int argc, char **argv) {
 
 void main()
 {
-    printf("c is pain incarnate");
+    initmem(myStrategy,500);
+
+    allocatemem(initialMem,200);
+
+    MemList *current_node = head;
+    /* Print all the elements in the linked list */
+    printf("The size of memory is:\n");
+    while ( current_node->next != NULL) {
+        printf("%d ", current_node->size);
+        current_node = current_node->next;
+    }
+    printf("\n\n");
+
+    printf("The number of nodes in the list is:");
+    /* Count the number of nodes in a linked list */
+    int cnt = 0;
+    while ( current_node != NULL) {
+        cnt++;
+        current_node = current_node->next;
+    }
+    printf("\n%d",cnt);
 }
