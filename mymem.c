@@ -56,7 +56,7 @@ void initmem(strategies strategy, size_t sz)
     head->prev = NULL;
     head->ptr = myMemory;
 
-    // for NextFit, we use a circular linked list  TODO - this code should be moved to somewhere else
+    // for NextFit, we use a circular linked list  TODO - this code should probably be moved to somewhere else
     if(myStrategy == Next) {
         tail->next = head;
         head->prev = tail;
@@ -74,14 +74,14 @@ int allocateMem(void *location, size_t requestedSize) {
     }
 
     if(allocatedBlock == NULL)
-        return -1; // -1 error code if the block to be allocated cannot be found
+        return NULL; // return null if block to be allocated does not exit
 
     allocatedBlock->alloc = 1;
 
     if(allocatedBlock->size == requestedSize) { // it is a perfect fit, allocate it all, and return
-        return 0;
+        return allocatedBlock->ptr;
     } else if (allocatedBlock->size < requestedSize)
-        return -1; // if the requested size is larger than available size, return w error
+        return NULL; // this should not happen if find() methods work correctly!
     else { // here we know there will be left-over memory after allocation, so we add a new struct after the allocatedBlock
         // create new struct
         MemList *newBlock = malloc(sizeof (MemList));
@@ -96,15 +96,17 @@ int allocateMem(void *location, size_t requestedSize) {
         // initialize newBlock data
         newBlock->size = allocatedBlock->size - (int) requestedSize;
         newBlock->alloc = 0;
-        newBlock->ptr = allocatedBlock->ptr + allocatedBlock->size; // next block's location is oldBlockLocation + oldBlockSize
+        newBlock->ptr = allocatedBlock->ptr + allocatedBlock->size; // next block's allocatedBlock is oldBlockLocation + oldBlockSize
 
-        // update the size of the allocatedBlock that was allocated
+        // update the size of the allocatedBlock
         allocatedBlock->size = (int)requestedSize;
 
         // update global tail and next pointers
         if(tail == allocatedBlock)
             tail = newBlock;
         next = newBlock;
+
+        return allocatedBlock->ptr;
     }
 }
 
@@ -112,16 +114,16 @@ int allocateMem(void *location, size_t requestedSize) {
 /* Allocate a block of memory with the requested size.
  *  If the requested block is not available, mymalloc returns NULL.
  *  Otherwise, it returns a pointer to the newly allocated block.
- *  Restriction: requested >= 1 
+ *  Restriction: requested >= 1
  */
 
 void *mymalloc(size_t requested)
 {
 	assert((int)myStrategy > 0);
-	
+
 	switch (myStrategy)
 	  {
-	  case NotSet: 
+	  case NotSet:
 	            return NULL;
 	  case First:
           findFirstFit(requested);
@@ -183,7 +185,7 @@ int mem_small_free(int size)
 
 char mem_is_alloc(void *ptr)
 {
-    return 0;
+        return 0;
 }
 
 /* 
@@ -297,20 +299,9 @@ void* findNextFit(size_t requested) {
 
 }
 
-MemList* getStructPtr(void *memLocation) {
-    if(memLocation == NULL)
-        return NULL;
-    MemList *memStruct = head;
-    while(memStruct != NULL) { // traverse the list to find the block from where memory will be allocated
-        if(memStruct->ptr == memLocation)
-            break;
-        memStruct = memStruct->next;
-    }
-    return memStruct;
-}
-
 void freeProgramMemory() {
-    if (myMemory != NULL) free(myMemory); /* in case this is not the first time initmem2 is called */
+    if (myMemory != NULL)
+        free(myMemory); /* in case this is not the first time initmem2 is called */
 
     /* TODO: release any other memory you were using for bookkeeping when doing a re-initialization! */
     // release memory used to store each of the nodes in the linked list
@@ -320,6 +311,32 @@ void freeProgramMemory() {
         current = current->next;
         free(temp);
     }
+}
+
+// this function can be used to get hold of a struct ptr when you only have a mem address
+// returns null if a struct with the given memory ptr cannot be found
+MemList* getStructPtr(void *memLocation) {
+    if(memLocation == NULL)
+        return NULL;
+    MemList *memStruct = head;
+    if(myStrategy == Next) {
+        size_t sentinel = 0; // this is to prevent infinite loops if a circular list is used
+        while(sentinel <= mySize) { // traverse the list to find the relevant block
+            if(memStruct->ptr == memLocation)
+                break;
+            sentinel += memStruct->size;
+            memStruct = memStruct->next;
+        }
+        if(sentinel > mySize)
+            return NULL; // this is reached if in a circular list, the struct cannot be found
+    } else {
+        while(memStruct != NULL) { // traverse the list to find the relevant block
+            if(memStruct->ptr == memLocation)
+                break;
+            memStruct = memStruct->next;
+        }
+    }
+    return memStruct;
 }
 
 /* 
@@ -404,5 +421,4 @@ int main()
     }
     printf("The number of nodes in the list is: %d", cnt);
     freeProgramMemory();
-    return 0;
 }
