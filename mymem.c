@@ -108,6 +108,7 @@ int allocateMem(void *location, size_t requestedSize) {
     }
 }
 
+
 /* Allocate a block of memory with the requested size.
  *  If the requested block is not available, mymalloc returns NULL.
  *  Otherwise, it returns a pointer to the newly allocated block.
@@ -123,12 +124,16 @@ void *mymalloc(size_t requested)
 	  case NotSet: 
 	            return NULL;
 	  case First:
+          findFirstFit(requested);
 	            return NULL;
 	  case Best:
+          findBestFit(requested);
 	            return NULL;
 	  case Worst:
+          findWorstFit(requested);
 	            return NULL;
 	  case Next:
+          //findNextFit(requested);
 	            return NULL;
 	  }
 	return NULL;
@@ -178,7 +183,7 @@ int mem_small_free(int size)
 
 char mem_is_alloc(void *ptr)
 {
-        return 0;
+    return 0;
 }
 
 /* 
@@ -242,6 +247,20 @@ strategies strategyFromString(char * strategy)
 		return 0;
 	}
 }
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+void* findFirstFit(size_t requested) {
+    void *firstBlockPtr = NULL;
+    MemList *current = head;
+
+    while(current != NULL) {
+        if(current->alloc == 0 && current->size >= requested) {
+            firstBlockPtr = current->ptr;
+        }
+        current = current->next;
+    }
+
+    return firstBlockPtr;
+}
 
 // returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
 void* findWorstFit(size_t requested) {
@@ -272,6 +291,10 @@ void* findBestFit(size_t requested) {
         current = current->next;
     }
     return bestBlockPtr;
+}
+//TODO: implement next fit algorithm
+void* findNextFit(size_t requested) {
+
 }
 
 MemList* getStructPtr(void *memLocation) {
@@ -354,12 +377,14 @@ void try_mymem(int argc, char **argv) {
 
 int main()
 {
-    initmem(Worst,500);
+    initmem(First,500);
 
-    allocateMem(findWorstFit(100),100);
+    allocateMem(findFirstFit(100),100);
+    allocateMem(findFirstFit(200),200);
+    /*allocateMem(findWorstFit(100),100);
     allocateMem(findWorstFit(50),50);
     allocateMem(findWorstFit(250),250);
-    allocateMem(findWorstFit(99),99);
+    allocateMem(findWorstFit(99),99);*/
 
     MemList *current_node = head;
     /* Print all the elements in the linked list */
