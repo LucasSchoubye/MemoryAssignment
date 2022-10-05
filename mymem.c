@@ -254,3 +254,8 @@ void try_mymem(int argc, char **argv) {
 	print_memory_status();
 	
 }
+
+void main()
+{
+    printf("c is pain incarnate");
+}
