@@ -291,7 +291,7 @@ void freeProgramMemory() {
     // release memory used to store each of the nodes in the linked list
     if (head != NULL) {
         MemList *current = head->next, *temp;
-        while(current != NULL && current != head) { // use the as a sentinel in the loop (in case of a circular list)
+        while(current != NULL && current != head) { // use the head as a sentinel in the loop (in case of a circular list)
             temp = current;
             current = current->next;
             free(temp);
