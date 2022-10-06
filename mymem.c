@@ -262,6 +262,55 @@ strategies strategyFromString(char * strategy)
 		return 0;
 	}
 }
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+void* findFirstFit(size_t requested) {
+    void *firstBlockPtr = NULL;
+    MemList *current = head;
+
+    while(current != NULL) {
+        if(current->alloc == 0 && current->size >= requested) {
+            firstBlockPtr = current->ptr;
+        }
+        current = current->next;
+    }
+
+    return firstBlockPtr;
+}
+
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+void* findWorstFit(size_t requested) {
+    void *biggestBlockPtr = NULL;
+    int biggestBlockSize = 0;
+    MemList *current = head;
+    while(current != NULL) {
+        if(current->alloc == 0 && current->size >= requested && current->size > biggestBlockSize) {
+            biggestBlockPtr = current->ptr;
+            biggestBlockSize = current->size;
+        }
+        current = current->next;
+    }
+    return biggestBlockPtr;
+}
+
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+void* findBestFit(size_t requested) {
+    void *bestBlockPtr = NULL;
+    size_t smallestFeasibleBlock = mySize; // initialize to the largest possible value
+    MemList *current = head;
+    while(current != NULL) {
+        if(current->alloc == 0 && current->size >= requested
+        && (current->size < smallestFeasibleBlock || current->size == mySize)) {
+            bestBlockPtr = current->ptr;
+            smallestFeasibleBlock = current->size;
+        }
+        current = current->next;
+    }
+    return bestBlockPtr;
+}
+//TODO: implement next fit algorithm
+void* findNextFit(size_t requested) {
+
+}
 
 void freeProgramMemory() {
     if (myMemory != NULL)
