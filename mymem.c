@@ -70,7 +70,7 @@ void *mymalloc(size_t requested)
 	  case NotSet: 
 	            return NULL;
 	  case First:
-	            return NULL;
+	            return allocateMem(findFirstFit(requested),requested);
 	  case Best:
 	            return allocateMem(findBestFit(requested),requested);
 	  case Worst:
@@ -123,34 +123,6 @@ void* allocateMem(MemList *allocatedBlock, size_t requestedSize) {
         next = head;                       // this could occur if after init, the whole block is allocated all at once
 
     return allocatedBlock->ptr;
-}
-
-// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-MemList* findWorstFit(size_t requested) {
-    MemList *biggestBlockPtr = NULL, *current = head;
-    int biggestBlockSize = 0;  // initialize to the smallest possible size
-    while(current != NULL) { // iterate over the whole list - save the largest eligible block found thus far
-        if(current->alloc == 0 && current->size >= requested && current->size > biggestBlockSize) {
-            biggestBlockPtr = current;
-            biggestBlockSize = current->size;
-        }
-        current = current->next;
-    }
-    return biggestBlockPtr;
-}
-
-// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-MemList* findBestFit(size_t requested) {
-    MemList *current = head, *bestBlockPtr = NULL;
-    size_t smallestFeasibleBlock = mySize; // initialize to the largest possible value
-    while(current != NULL) {  // iterate over the whole list - save the smallest eligible block found thus far
-        if(current->alloc == 0 && current->size >= requested && (current->size < smallestFeasibleBlock || current->size == mySize)) {
-            bestBlockPtr = current;
-            smallestFeasibleBlock = current->size;
-        }
-        current = current->next;
-    }
-    return bestBlockPtr;
 }
 
 
@@ -262,29 +234,14 @@ strategies strategyFromString(char * strategy)
 		return 0;
 	}
 }
-// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-void* findFirstFit(size_t requested) {
-    void *firstBlockPtr = NULL;
-    MemList *current = head;
-
-    while(current != NULL) {
-        if(current->alloc == 0 && current->size >= requested) {
-            firstBlockPtr = current->ptr;
-        }
-        current = current->next;
-    }
-
-    return firstBlockPtr;
-}
 
 // returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-void* findWorstFit(size_t requested) {
-    void *biggestBlockPtr = NULL;
-    int biggestBlockSize = 0;
-    MemList *current = head;
-    while(current != NULL) {
+MemList* findWorstFit(size_t requested) {
+    MemList *biggestBlockPtr = NULL, *current = head;
+    int biggestBlockSize = 0;  // initialize to the smallest possible size
+    while(current != NULL) { // iterate over the whole list - save the largest eligible block found thus far
         if(current->alloc == 0 && current->size >= requested && current->size > biggestBlockSize) {
-            biggestBlockPtr = current->ptr;
+            biggestBlockPtr = current;
             biggestBlockSize = current->size;
         }
         current = current->next;
@@ -293,23 +250,37 @@ void* findWorstFit(size_t requested) {
 }
 
 // returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-void* findBestFit(size_t requested) {
-    void *bestBlockPtr = NULL;
+MemList* findBestFit(size_t requested) {
+    MemList *current = head, *bestBlockPtr = NULL;
     size_t smallestFeasibleBlock = mySize; // initialize to the largest possible value
-    MemList *current = head;
-    while(current != NULL) {
-        if(current->alloc == 0 && current->size >= requested
-        && (current->size < smallestFeasibleBlock || current->size == mySize)) {
-            bestBlockPtr = current->ptr;
+    while(current != NULL) {  // iterate over the whole list - save the smallest eligible block found thus far
+        if(current->alloc == 0 && current->size >= requested && (current->size < smallestFeasibleBlock || current->size == mySize)) {
+            bestBlockPtr = current;
             smallestFeasibleBlock = current->size;
         }
         current = current->next;
     }
     return bestBlockPtr;
 }
-//TODO: implement next fit algorithm
-void* findNextFit(size_t requested) {
 
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+MemList* findFirstFit(size_t requested) {
+    MemList *firstBlockPtr = NULL;
+    MemList *current = head;
+
+    while(current != NULL) {
+        if(current->alloc == 0 && current->size >= requested) {
+            firstBlockPtr = current;
+        }
+        current = current->next;
+    }
+
+    return firstBlockPtr;
+}
+
+//TODO: implement next fit algorithm
+MemList* findNextFit(size_t requested) {
+    return NULL;
 }
 
 void freeProgramMemory() {
@@ -356,7 +327,23 @@ MemList* getStructPtr(void *memLocation) {
 /* Use this function to print out the current contents of memory. */
 void print_memory()
 {
-	return;
+    MemList *current_node = head;
+    /* Print all the elements in the linked list */
+    printf("The blocks in memory are:\n");
+    while ( current_node != NULL) {
+        printf("allocStatus : %d\tsize: %d\n", current_node->alloc,current_node->size);
+        current_node = current_node->next;
+    }
+    printf("\n");
+
+    /* Count the number of nodes in a linked list */
+    int cnt = 0;
+    current_node = head;
+    while ( current_node != NULL) {
+        cnt++;
+        current_node = current_node->next;
+    }
+    printf("The number of nodes in the list is: %d", cnt);
 }
 
 /* Use this function to track memory allocation performance.  
@@ -403,29 +390,14 @@ void try_mymem(int argc, char **argv) {
 
 int main()
 {
-    initmem(Worst,500);
+    initmem(First,500);
     mymalloc(80);
     mymalloc(100);
     mymalloc(220);
     mymalloc(99);
-    mymalloc(2); // this should not be allocated - no space
+    mymalloc(2); // this should not be allocated - not enough space
 
-    MemList *current_node = head;
-    /* Print all the elements in the linked list */
-    printf("The blocks in memory are:\n");
-    while ( current_node != NULL) {
-        printf("allocStatus : %d\tsize: %d\n", current_node->alloc,current_node->size);
-        current_node = current_node->next;
-    }
-    printf("\n");
+    print_memory();
 
-    /* Count the number of nodes in a linked list */
-    int cnt = 0;
-    current_node = head;
-    while ( current_node != NULL) {
-        cnt++;
-        current_node = current_node->next;
-    }
-    printf("The number of nodes in the list is: %d", cnt);
     freeProgramMemory();
 }
