@@ -81,15 +81,15 @@ void *mymalloc(size_t requested)
 	return NULL;
 }
 
-// returns NULL if memory cannot be granted, otherwise returns ptr to memory location (void*)
+// returns NULL if memory cannot be allocated, otherwise returns ptr to memory location (void*) of allocated block
 void* allocateMem(MemList *allocatedBlock, size_t requestedSize) {
     if(allocatedBlock == NULL || allocatedBlock->size < requestedSize)
-        return NULL; // return null if block does not exit or if search algorithm found a too small block (a mistake)
+        return NULL; // return null if block does not exit or if search algorithm found a too small block (should not happen)
 
-    allocatedBlock->alloc = 1; // repurpose the found block by changing its alloc status. We change its size later
+    allocatedBlock->alloc = 1; // repurpose the found block by changing its alloc status. We will change its size later
 
     if(allocatedBlock->size > requestedSize) {
-        // if requested size < block size, there is a block of left-over memory, so we need a new struct
+        // if requested size < block size, there will be a block of left-over memory, so we need a new struct
         MemList *newBlock = malloc(sizeof(MemList)); // newblock will store information about the left-over chunk
 
         // update pointers in the linked list (insert newBlock after allocatedBlock)
@@ -102,7 +102,7 @@ void* allocateMem(MemList *allocatedBlock, size_t requestedSize) {
         // initialize newBlock data
         newBlock->size = allocatedBlock->size - (int) requestedSize;
         newBlock->alloc = 0;
-        newBlock->ptr = allocatedBlock->ptr + allocatedBlock->size; // next block's allocatedBlock is oldBlockLocation + oldBlockSize
+        newBlock->ptr = allocatedBlock->ptr + requestedSize; // the new block's starting location is oldBlockLocation + oldBlockSize
 
         // update the size of the allocatedBlock
         allocatedBlock->size = (int) requestedSize;
@@ -125,11 +125,93 @@ void* allocateMem(MemList *allocatedBlock, size_t requestedSize) {
     return allocatedBlock->ptr;
 }
 
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+MemList* findWorstFit(size_t requested) {
+    MemList *biggestBlockPtr = NULL, *current = head;
+    int biggestBlockSize = 0;  // initialize to the smallest possible size
+    while(current != NULL) { // iterate over the whole list - save the largest eligible block found thus far
+        if(current->alloc == 0 && current->size >= requested && current->size > biggestBlockSize) {
+            biggestBlockPtr = current;
+            biggestBlockSize = current->size;
+        }
+        current = current->next;
+    }
+    return biggestBlockPtr;
+}
+
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+MemList* findBestFit(size_t requested) {
+    MemList *current = head, *bestBlockPtr = NULL;
+    size_t smallestFeasibleBlock = mySize; // initialize to the largest possible value
+    while(current != NULL) {  // iterate over the whole list - save the smallest eligible block found thus far
+        if(current->alloc == 0 && current->size >= requested && (current->size < smallestFeasibleBlock || current->size == mySize)) {
+            bestBlockPtr = current;
+            smallestFeasibleBlock = current->size;
+        }
+        current = current->next;
+    }
+    return bestBlockPtr;
+}
+
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+MemList* findFirstFit(size_t requested) {
+    MemList *firstBlockPtr = NULL;
+    MemList *current = head;
+
+    while(current != NULL) {
+        if(current->alloc == 0 && current->size >= requested) {
+            firstBlockPtr = current;
+        }
+        current = current->next;
+    }
+
+    return firstBlockPtr;
+}
+
+//TODO: implement next fit algorithm
+MemList* findNextFit(size_t requested) {
+    return NULL;
+}
 
 /* Frees a block of memory previously allocated by mymalloc. */
 void myfree(void* block)
 {
 	return;
+}
+
+void freeProgramMemory() {
+    if (myMemory != NULL)
+        free(myMemory); /* in case this is not the first time initmem2 is called */
+
+    // release memory used to store each of the nodes in the linked list
+    if (head != NULL) {
+        MemList *current = head->next, *temp;
+        while(current != NULL && current != head) { // use the head as a sentinel in the loop (in case of a circular list)
+            temp = current;
+            current = current->next;
+            free(temp);
+        }
+        free(head); // free the head last
+    }
+}
+
+// this function takes a mem location ptr to the beginning of a block and returns a pointer to the corresponding struct
+// returns null if a struct with the given memory ptr cannot be found
+MemList* getStructPtr(void *memLocation) {
+    if(memLocation == NULL || head == NULL)
+        return NULL;
+    if(memLocation == head->ptr) // head is handled separately as it will be used like a sentinel (in case of a circular list)
+        return head;
+    MemList *memStruct = head->next;
+    while(memStruct != NULL && memStruct != head) { // traverse the list to find the relevant block
+        if(memStruct->ptr == memLocation)
+            return memStruct;
+        memStruct = memStruct->next;
+    }
+    if(memStruct == head) // in this case, we have a circular list and have looped all the way back to the start without finding a struct
+        memStruct = NULL; // thus the return value should be null
+
+    return memStruct;
 }
 
 /****** Memory status/property functions ******
@@ -166,11 +248,25 @@ int mem_largest_free()
 int mem_small_free(int size)
 {
 	return 0;
-}       
+}
 
+/* Allocation status of a particular byte. */
 char mem_is_alloc(void *ptr)
 {
-        return 0;
+    MemList *currentNode = head, *nextNode = head->next;
+    while(nextNode != NULL) {
+        if(ptr >= currentNode->ptr && ptr < nextNode->ptr)
+            return currentNode->alloc;
+        currentNode = nextNode;
+        nextNode = nextNode->next;
+        if(currentNode == head) // this should not happen
+            break; // it would mean that we have looped thru the whole (circular) list without finding the ptr anywhere
+    }
+    // check if the ptr is within the last node in a non-circular linked list
+    if(nextNode == NULL && ptr >= currentNode->ptr && ptr < (currentNode->ptr + currentNode->size) )
+        return currentNode->alloc;
+
+    return 0;
 }
 
 /* 
@@ -235,90 +331,6 @@ strategies strategyFromString(char * strategy)
 	}
 }
 
-// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-MemList* findWorstFit(size_t requested) {
-    MemList *biggestBlockPtr = NULL, *current = head;
-    int biggestBlockSize = 0;  // initialize to the smallest possible size
-    while(current != NULL) { // iterate over the whole list - save the largest eligible block found thus far
-        if(current->alloc == 0 && current->size >= requested && current->size > biggestBlockSize) {
-            biggestBlockPtr = current;
-            biggestBlockSize = current->size;
-        }
-        current = current->next;
-    }
-    return biggestBlockPtr;
-}
-
-// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-MemList* findBestFit(size_t requested) {
-    MemList *current = head, *bestBlockPtr = NULL;
-    size_t smallestFeasibleBlock = mySize; // initialize to the largest possible value
-    while(current != NULL) {  // iterate over the whole list - save the smallest eligible block found thus far
-        if(current->alloc == 0 && current->size >= requested && (current->size < smallestFeasibleBlock || current->size == mySize)) {
-            bestBlockPtr = current;
-            smallestFeasibleBlock = current->size;
-        }
-        current = current->next;
-    }
-    return bestBlockPtr;
-}
-
-// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-MemList* findFirstFit(size_t requested) {
-    MemList *firstBlockPtr = NULL;
-    MemList *current = head;
-
-    while(current != NULL) {
-        if(current->alloc == 0 && current->size >= requested) {
-            firstBlockPtr = current;
-        }
-        current = current->next;
-    }
-
-    return firstBlockPtr;
-}
-
-//TODO: implement next fit algorithm
-MemList* findNextFit(size_t requested) {
-    return NULL;
-}
-
-void freeProgramMemory() {
-    if (myMemory != NULL)
-        free(myMemory); /* in case this is not the first time initmem2 is called */
-
-    /* TODO: release any other memory you were using for bookkeeping when doing a re-initialization! */
-    // release memory used to store each of the nodes in the linked list
-    if (head != NULL) {
-        MemList *current = head->next, *temp;
-        while(current != NULL && current != head) { // use the head as a sentinel in the loop (in case of a circular list)
-            temp = current;
-            current = current->next;
-            free(temp);
-        }
-        free(head); // free the head last
-    }
-}
-
-// this function can be used to get hold of a struct ptr when you only have a mem location ptr
-// returns null if a struct with the given memory ptr cannot be found
-MemList* getStructPtr(void *memLocation) {
-    if(memLocation == NULL || head == NULL)
-        return NULL;
-    if(memLocation == head->ptr) // head is handled separately as it will be used like a sentinel (in case of a circular list)
-        return head;
-    MemList *memStruct = head->next;
-    while(memStruct != NULL && memStruct != head) { // traverse the list to find the relevant block
-        if(memStruct->ptr == memLocation)
-            break;
-        memStruct = memStruct->next;
-    }
-    if(memStruct == head) // in this case, we have a circular list and have looped all the way back to the start without finding a struct
-        memStruct = NULL; // thus the return value should be null
-
-    return memStruct;
-}
-
 /* 
  * These functions are for you to modify however you see fit.  These will not
  * be used in tests, but you may find them useful for debugging.
@@ -343,7 +355,7 @@ void print_memory()
         cnt++;
         current_node = current_node->next;
     }
-    printf("The number of nodes in the list is: %d", cnt);
+    printf("The number of nodes in the list is: %d\n", cnt);
 }
 
 /* Use this function to track memory allocation performance.  
@@ -391,8 +403,8 @@ void try_mymem(int argc, char **argv) {
 int main()
 {
     initmem(First,500);
-    mymalloc(80);
     mymalloc(100);
+    mymalloc(80);
     mymalloc(220);
     mymalloc(99);
     mymalloc(2); // this should not be allocated - not enough space
