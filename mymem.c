@@ -200,18 +200,15 @@ void freeProgramMemory() {
 MemList* getStructPtr(void *memLocation) {
     if(memLocation == NULL || head == NULL)
         return NULL;
-    if(memLocation == head->ptr) // head is handled separately as it will be used like a sentinel (in case of a circular list)
-        return head;
-    MemList *memStruct = head->next;
-    while(memStruct != NULL && memStruct != head) { // traverse the list to find the relevant block
+    MemList *memStruct = head;
+    while(memStruct != NULL) { // traverse the list to find the relevant block whose ptr = *memLocation
         if(memStruct->ptr == memLocation)
             return memStruct;
         memStruct = memStruct->next;
+        if(memStruct == head) // in this case, we have a circular list and have looped all the way back to the start without finding a struct
+            return NULL; // thus should return null
     }
-    if(memStruct == head) // in this case, we have a circular list and have looped all the way back to the start without finding a struct
-        memStruct = NULL; // thus the return value should be null
-
-    return memStruct;
+    return NULL;
 }
 
 /****** Memory status/property functions ******
