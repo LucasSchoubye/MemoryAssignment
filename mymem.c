@@ -247,7 +247,16 @@ int mem_largest_free()
 /* Number of free blocks smaller than or equal to "size" bytes. */
 int mem_small_free(int size)
 {
-	return 0;
+    int count = 0;
+    MemList *current = head;
+    while(current != NULL) {
+        if(current->alloc == 0 && current->size <= size)
+            count++;
+        current = current->next;
+        if(current == head)
+            break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
+    }
+    return count;
 }
 
 /* Allocation status of a particular byte. */
