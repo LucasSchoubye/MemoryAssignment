@@ -262,19 +262,14 @@ int mem_small_free(int size)
 /* Allocation status of a particular byte. */
 char mem_is_alloc(void *ptr)
 {
-    MemList *currentNode = head, *nextNode = head->next;
-    while(nextNode != NULL) {
-        if(ptr >= currentNode->ptr && ptr < nextNode->ptr)
-            return currentNode->alloc;
-        currentNode = nextNode;
-        nextNode = nextNode->next;
-        if(currentNode == head) // this should not happen
+    MemList *current = head;
+    while(current != NULL) {
+        if(ptr >= current->ptr && ptr < (current->ptr + current->size))
+            return current->alloc;
+        current = current->next;
+        if(current == head) // this should not happen
             break; // it would mean that we have looped thru the whole (circular) list without finding the ptr anywhere
     }
-    // check if the ptr is within the last node in a non-circular linked list
-    if(nextNode == NULL && ptr >= currentNode->ptr && ptr < (currentNode->ptr + currentNode->size) )
-        return currentNode->alloc;
-
     return 0;
 }
 
