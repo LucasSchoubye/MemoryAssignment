@@ -176,23 +176,8 @@ MemList* findNextFit(size_t requested) {
 /* Frees a block of memory previously allocated by mymalloc. */
 void myfree(void* block)
 {
-	return;
-}
-
-void freeProgramMemory() {
-    if (myMemory != NULL)
-        free(myMemory); /* in case this is not the first time initmem2 is called */
-
-    // release memory used to store each of the nodes in the linked list
-    if (head != NULL) {
-        MemList *current = head->next, *temp;
-        while(current != NULL && current != head) { // use the head as a sentinel in the loop (in case of a circular list)
-            temp = current;
-            current = current->next;
-            free(temp);
-        }
-        free(head); // free the head last
-    }
+	// getStructPtr() can be used to obtain a ptr to the relevant MemList/ struct
+    return;
 }
 
 // this function takes a mem location ptr to the beginning of a block and returns a pointer to the corresponding struct
@@ -209,6 +194,22 @@ MemList* getStructPtr(void *memLocation) {
             return NULL; // thus should return null
     }
     return NULL;
+}
+
+void freeProgramMemory() {
+    if (myMemory != NULL)
+        free(myMemory); /* in case this is not the first time initmem2 is called */
+
+    // release memory used to store each of the nodes in the linked list
+    if (head != NULL) {
+        MemList *current = head->next, *temp;
+        while(current != NULL && current != head) { // use the head as a sentinel in the loop (in case of a circular list)
+            temp = current;
+            current = current->next;
+            free(temp);
+        }
+        free(head); // free the head last
+    }
 }
 
 /****** Memory status/property functions ******
