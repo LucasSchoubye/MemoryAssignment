@@ -239,7 +239,16 @@ int mem_free()
 /* Number of bytes in the largest contiguous area of unallocated memory */
 int mem_largest_free()
 {
-	return 0;
+    MemList *current = head;
+    int biggestBlockSize = 0;  // initialize to the smallest possible size
+    while(current != NULL) { // iterate over the whole list - save the largest free block's size
+        if(current->alloc == 0 && current->size > biggestBlockSize)
+            biggestBlockSize = current->size;
+        current = current->next;
+        if(current == head)
+            break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
+    }
+    return biggestBlockSize;
 }
 
 /* Number of free blocks smaller than or equal to "size" bytes. */
