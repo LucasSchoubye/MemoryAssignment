@@ -221,19 +221,40 @@ void freeProgramMemory() {
 /* Get the number of contiguous areas of free space in memory. */
 int mem_holes()
 {
-	return 0;
+    MemList *current = head;
+    int cnt = 0;
+    while ( current != NULL ) {
+        if ((int)current->alloc == 0)
+            cnt++;
+        current = current->next;
+    }
+	return cnt;
 }
 
 /* Get the number of bytes allocated */
 int mem_allocated()
 {
-	return 0;
+    MemList *current = head;
+    int cntBytes = 0;
+    while ( current != NULL) {
+        if ((int)current->alloc == 1)
+            cntBytes += current->size;
+        current = current->next;
+    }
+    return cntBytes;
 }
 
 /* Number of non-allocated bytes */
 int mem_free()
 {
-	return 0;
+    MemList *current = head;
+    int cntBytes = 0;
+    while ( current != NULL) {
+        if ((int)current->alloc == 0)
+            cntBytes += current->size;
+        current = current->next;
+    }
+	return cntBytes;
 }
 
 /* Number of bytes in the largest contiguous area of unallocated memory */
@@ -298,7 +319,6 @@ int mem_total()
 	return mySize;
 }
 
-
 // Get string name for a strategy. 
 char *strategy_name(strategies strategy)
 {
@@ -350,21 +370,21 @@ strategies strategyFromString(char * strategy)
 /* Use this function to print out the current contents of memory. */
 void print_memory()
 {
-    MemList *current_node = head;
+    MemList *current = head;
     /* Print all the elements in the linked list */
     printf("The blocks in memory are:\n");
-    while ( current_node != NULL) {
-        printf("allocStatus : %d\tsize: %d\n", current_node->alloc,current_node->size);
-        current_node = current_node->next;
+    while ( current != NULL) {
+        printf("allocStatus : %d\tsize: %d\n", current->alloc,current->size);
+        current = current->next;
     }
     printf("\n");
 
-    /* Count the number of nodes in a linked list */
+    // Count the number of nodes in a linked list
     int cnt = 0;
-    current_node = head;
-    while ( current_node != NULL) {
+    current = head;
+    while ( current != NULL) {
         cnt++;
-        current_node = current_node->next;
+        current = current->next;
     }
     printf("The number of nodes in the list is: %d\n", cnt);
 }
@@ -421,6 +441,11 @@ int main()
     mymalloc(2); // this should not be allocated - not enough space
 
     print_memory();
+    printf("number of allocated bytes: %d",mem_allocated());
+    printf("\nnumber of non-allocated bytes: %d",mem_free());
+    printf("\nnumber of holes: %d\n",mem_holes());
+
 
     freeProgramMemory();
+
 }
