@@ -174,10 +174,41 @@ MemList* findNextFit(size_t requested) {
 }
 
 /* Frees a block of memory previously allocated by mymalloc. */
-void myfree(void* block)
+void myfree(void *block)
 {
-	// getStructPtr() can be used to obtain a ptr to the relevant MemList/ struct
-    return;
+    MemList *freeing = getStructPtr(block); //Get the pointer for the struct corresponding to the mem location ptr
+    if (freeing->alloc == 0) //If the block isn't in use, return
+        return;
+
+    free(block); //Frees the memory associated with the block
+    freeing->alloc = 0;
+
+    if ((freeing->prev != NULL) && (freeing->prev->alloc == 0)) { //If there is a previous, free block, combine them
+        MemList *left = freeing->prev;
+        if (left->prev != NULL) { //If the left block isn't the first
+            left->prev->next = freeing; //Update links
+            freeing->prev = left->prev;
+        } else {
+            freeing->prev = NULL; //Update link
+            head = freeing; //Update head
+        }
+        freeing->ptr = left->ptr; //Update memory location ptr
+        freeing->size += left->size; //Add the size of the joined blocks
+        free(left);
+    }
+
+    if ((freeing->next != NULL) && (freeing->next->alloc == 0)) { //If there is a next, free block, combine them
+        MemList *right = freeing->next;
+        if (right->next != NULL) { //If the right block isn't the last
+            right->next->prev = freeing;  //Update links
+            freeing->next = right->next;
+        } else {
+            freeing->next = NULL; //Update link
+            tail = freeing; //Update head
+        }
+        freeing->size += right->size; //Add the size of the joined blocks
+        free(right);
+    }
 }
 
 // this function takes a mem location ptr to the beginning of a block and returns a pointer to the corresponding struct
