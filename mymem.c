@@ -76,7 +76,7 @@ void *mymalloc(size_t requested)
 	  case Worst:
 	            return allocateMem(findWorstFit(requested),requested);
 	  case Next:
-	            return allocateMem(findNextFit(requested),requested);
+                return allocateMem(findNextFit(requested),requested);
 	  }
 	return NULL;
 }
@@ -165,6 +165,7 @@ MemList* findFirstFit(size_t requested) {
         }
         current = current->next;
     }
+    return NULL;
 }
 
 //TODO: implement next fit algorithm
@@ -438,47 +439,20 @@ void print_memory()
     MemList *current = head;
     /* Print all the elements in the linked list */
     printf("The blocks in memory are:\n");
-    if (myStrategy != Next) {
-        while (current != NULL) {
-            printf("allocStatus : %d\tsize: %d\n", current->alloc, current->size);
-            current = current->next;
-        }
-    }
-    else
-    {
-        printf("allocStatus : %d\tsize: %d\n", current->alloc, current->size);
-        if (current->next != NULL) {
-            current = current->next;
-            while (current != head) {
-                printf("allocStatus : %d\tsize: %d\n", current->alloc, current->size);
-                current = current->next;
-            }
-        }
+    while ( current != NULL) {
+        printf("allocStatus : %d\tsize: %d\n", current->alloc,current->size);
+        current = current->next;
     }
     printf("\n");
 
     // Count the number of nodes in a linked list
     int count = 0;
     current = head;
-    if (myStrategy != Next) {
-        while ( current != NULL) {
-            count++;
-            current = current->next;
-        }
+    while ( current != NULL) {
+        count++;
+        current = current->next;
     }
-    else
-    {
-        if (current->next != NULL) {
-            count++;
-            current = current->next;
-            while (current != head) {
-                count++;
-                current = current->next;
-            }
-        }
-    }
-
-    printf("The number of nodes in the list is: %d\n", cnt);
+    printf("The number of nodes in the list is: %d\n", count);
 }
 
 /* Use this function to track memory allocation performance.  
@@ -523,21 +497,21 @@ void try_mymem(int argc, char **argv) {
 	
 }
 
-int main()
-{
-    initmem(First,500);
-    mymalloc(100);
-    mymalloc(80);
-    mymalloc(220);
-    mymalloc(99);
-    mymalloc(2); // this should not be allocated - not enough space
-
-    print_memory();
-    printf("number of allocated bytes: %d",mem_allocated());
-    printf("\nnumber of non-allocated bytes: %d",mem_free());
-    printf("\nnumber of holes: %d\n",mem_holes());
-
-
-    freeProgramMemory();
-
-}
+//int main()
+//{
+//    initmem(Next, 500);
+//    mymalloc(100);
+//    mymalloc(80);
+//    mymalloc(220);
+//    mymalloc(99);
+//    mymalloc(2); // this should not be allocated - not enough space
+//
+//    print_memory();
+//    printf("number of allocated bytes: %d",mem_allocated());
+//    printf("\nnumber of non-allocated bytes: %d",mem_free());
+//    printf("\nnumber of holes: %d\n",mem_holes());
+//
+//
+//    freeProgramMemory();
+//
+//}
