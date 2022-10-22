@@ -17,6 +17,7 @@ static MemList *head;
 static MemList *tail;
 static MemList *next;
 
+
 /* initmem must be called prior to mymalloc and myfree.
 
    initmem may be called more than once in a given exeuction;
@@ -76,7 +77,7 @@ void *mymalloc(size_t requested)
 	  case Worst:
 	            return allocateMem(findWorstFit(requested),requested);
 	  case Next:
-	            return NULL;
+	            return allocateMem(findNextFit(requested),requested);
 	  }
 	return NULL;
 }
@@ -158,7 +159,7 @@ MemList* findFirstFit(size_t requested) {
     MemList *firstBlockPtr = NULL;
     MemList *current = head;
 
-    while(current != NULL) {
+    while(current != NULL && firstBlockPtr == NULL) {
         if(current->alloc == 0 && current->size >= requested) {
             firstBlockPtr = current;
         }
@@ -169,8 +170,32 @@ MemList* findFirstFit(size_t requested) {
 }
 
 //TODO: implement next fit algorithm
-MemList* findNextFit(size_t requested) {
-    return NULL;
+MemList* findNextFit(size_t requested)
+{
+    //MemList *current = next;
+    MemList *startBlockPtr = next;
+    MemList *nextBlockPtr = NULL;
+
+    if (next->next != NULL) {
+        next = next->next;
+        while(next != startBlockPtr )
+        {
+            printf("Here \n");
+            if(next->alloc == 0 && next->size >= requested)
+            {
+                //nextBlockPtr = next;
+                return next;
+            }
+            next = next->next;
+        }
+    }
+    else
+    {
+        printf("Else Here \n");
+        nextBlockPtr = startBlockPtr;
+    }
+
+    return nextBlockPtr;
 }
 
 /* Frees a block of memory previously allocated by mymalloc. */
@@ -404,19 +429,46 @@ void print_memory()
     MemList *current = head;
     /* Print all the elements in the linked list */
     printf("The blocks in memory are:\n");
-    while ( current != NULL) {
-        printf("allocStatus : %d\tsize: %d\n", current->alloc,current->size);
-        current = current->next;
+    if (myStrategy != Next) {
+        while (current != NULL) {
+            printf("allocStatus : %d\tsize: %d\n", current->alloc, current->size);
+            current = current->next;
+        }
+    }
+    else
+    {
+        printf("allocStatus : %d\tsize: %d\n", current->alloc, current->size);
+        if (current->next != NULL) {
+            current = current->next;
+            while (current != head) {
+                printf("allocStatus : %d\tsize: %d\n", current->alloc, current->size);
+                current = current->next;
+            }
+        }
     }
     printf("\n");
 
     // Count the number of nodes in a linked list
     int cnt = 0;
     current = head;
-    while ( current != NULL) {
-        cnt++;
-        current = current->next;
+    if (myStrategy != Next) {
+        while ( current != NULL) {
+            cnt++;
+            current = current->next;
+        }
     }
+    else
+    {
+        if (current->next != NULL) {
+            cnt++;
+            current = current->next;
+            while (current != head) {
+                cnt++;
+                current = current->next;
+            }
+        }
+    }
+
     printf("The number of nodes in the list is: %d\n", cnt);
 }
 
@@ -464,7 +516,7 @@ void try_mymem(int argc, char **argv) {
 
 int main()
 {
-    initmem(First,500);
+    initmem(Next,500);
     mymalloc(100);
     mymalloc(80);
     mymalloc(220);
@@ -478,5 +530,4 @@ int main()
 
 
     freeProgramMemory();
-
 }
