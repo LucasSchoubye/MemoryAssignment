@@ -76,7 +76,7 @@ void *mymalloc(size_t requested)
 	  case Worst:
 	            return allocateMem(findWorstFit(requested),requested);
 	  case Next:
-	            return NULL;
+                return allocateMem(findNextFit(requested),requested);
 	  }
 	return NULL;
 }
@@ -159,18 +159,27 @@ MemList* findFirstFit(size_t requested) {
     MemList *current = head;
 
     while(current != NULL) {
-        if(current->alloc == 0 && current->size >= requested) {
+        if (current->alloc == 0 && current->size >= requested) {
             firstBlockPtr = current;
+            return firstBlockPtr;
+        }
+        current = current->next;
+    }
+}
+
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+MemList* findNextFit(size_t requested) {
+    MemList *nextBlockPtr = NULL;
+    MemList *current = head;
+
+    while(current != head) {
+        if(current->alloc == 0 && current->size >= requested) {
+            nextBlockPtr = current;
         }
         current = current->next;
     }
 
-    return firstBlockPtr;
-}
-
-//TODO: implement next fit algorithm
-MemList* findNextFit(size_t requested) {
-    return NULL;
+    return nextBlockPtr;
 }
 
 /* Frees a block of memory previously allocated by mymalloc. */
@@ -476,7 +485,7 @@ void try_mymem(int argc, char **argv) {
 
 int main()
 {
-    initmem(First,500);
+    initmem(Next, 500);
     mymalloc(100);
     mymalloc(80);
     mymalloc(220);
