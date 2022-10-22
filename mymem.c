@@ -186,10 +186,9 @@ MemList* findNextFit(size_t requested) {
 void myfree(void *block)
 {
     MemList *freeing = getStructPtr(block); //Get the pointer for the struct corresponding to the mem location ptr
-    if (freeing->alloc == 0) //If the block isn't in use, return
+    if ((freeing != NULL) && (freeing->alloc == 0)) //If the block isn't in use, return
         return;
 
-    free(block); //Frees the memory associated with the block
     freeing->alloc = 0;
 
     if ((freeing->prev != NULL) && (freeing->prev != tail) && (freeing->prev->alloc == 0)) { //If there is a previous, free block in a non-circular manner, combine them
