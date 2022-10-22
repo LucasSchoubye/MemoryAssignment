@@ -168,15 +168,15 @@ MemList* findFirstFit(size_t requested) {
     return NULL;
 }
 
-// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
-MemList* findNextFit(size_t requested) {
+MemList* findNextFit(size_t requested)
+{
     MemList *current = next;
-
     while(current != NULL) {
-        if(current->alloc == 0 && current->size >= requested)
+        if (current->alloc == 0 && current->size >= requested)
             return current;
         current = current->next;
-        if(current == next)
+
+        if (current == next)
             break;  // this will only happen when we have a circular list and have looped back to where we started from
     }
     return NULL;
