@@ -165,14 +165,15 @@ MemList* findFirstFit(size_t requested) {
         }
         current = current->next;
     }
+    return NULL;
 }
 
 //TODO: implement next fit algorithm
 MemList* findNextFit(size_t requested)
 {
     //MemList *current = next;
-    MemList *startBlockPtr = next;
     MemList *nextBlockPtr = NULL;
+    MemList *startBlockPtr = next;
 
     if (next->next != NULL) {
         next = next->next;
@@ -478,7 +479,7 @@ void print_memory()
         }
     }
 
-    printf("The number of nodes in the list is: %d\n", cnt);
+    printf("The number of nodes in the list is: %d\n", count);
 }
 
 /* Use this function to track memory allocation performance.  
@@ -525,7 +526,7 @@ void try_mymem(int argc, char **argv) {
 
 int main()
 {
-    initmem(Next,500);
+    initmem(First,500);
     mymalloc(100);
     mymalloc(80);
     mymalloc(220);
