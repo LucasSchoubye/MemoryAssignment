@@ -196,7 +196,7 @@ void myfree(void *block)
 
     if (freeing->prev != NULL && freeing != head && freeing->prev->alloc == 0) { //If there is a previous, free block in a non-circular manner, combine them
         MemList *left = freeing->prev;
-        if (left->prev != NULL) { //If the left block isn't null - either because it's the head in a non-circular list, or any node in a circular one
+        if (left->prev != NULL) { //If the left block isn't null (either because it's a non-head node in a non-circular list, or any node in a circular one)
             left->prev->next = freeing; //Update links
         }
         if (left == head)
@@ -212,7 +212,7 @@ void myfree(void *block)
 
     if ((freeing->next != NULL) && (freeing != tail) && (freeing->next->alloc == 0)) { //If there is a next, free block in a non-circular manner, combine them
         MemList *right = freeing->next;
-        if (right->next != NULL) { //If the right block isn't the last - either because it's the tail in a non-circular list, or any node in a circular one
+        if (right->next != NULL) { //If the right block isn't null (either because it's a non-tail node in a non-circular list, or any node in a circular one)
             right->next->prev = freeing;  //Update links
         }
         if (right == tail)
@@ -475,7 +475,6 @@ void try_mymem(int argc, char **argv) {
 	initmem(strat,500);
 	
 	a = mymalloc(100);
-    myfree(a);
     b = mymalloc(100);
 	c = mymalloc(100);
 	myfree(b);
