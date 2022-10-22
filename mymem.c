@@ -267,45 +267,45 @@ void freeProgramMemory() {
 int mem_holes()
 {
     MemList *current = head;
-    int cnt = 0;
+    int count = 0;
     while ( current != NULL ) {
-        if ((int)current->alloc == 0)
-            cnt++;
+        if ((int)current->alloc == 0) // traverse the list and add to the counter if alloc is 0
+            count++;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-	return cnt;
+	return count;
 }
 
 /* Get the number of bytes allocated */
 int mem_allocated()
 {
     MemList *current = head;
-    int cntBytes = 0;
+    int countBytes = 0;
     while ( current != NULL) {
-        if ((int)current->alloc == 1)
-            cntBytes += current->size;
+        if ((int)current->alloc == 1) // traverse the list and add size if alloc is 1
+            countBytes += current->size;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-    return cntBytes;
+    return countBytes;
 }
 
 /* Number of non-allocated bytes */
 int mem_free()
 {
     MemList *current = head;
-    int cntBytes = 0;
+    int countBytes = 0;
     while ( current != NULL) {
-        if ((int)current->alloc == 0)
-            cntBytes += current->size;
+        if ((int)current->alloc == 0) // traverse the list and add size if alloc is 0
+            countBytes += current->size;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-	return cntBytes;
+	return countBytes;
 }
 
 /* Number of bytes in the largest contiguous area of unallocated memory */
@@ -431,13 +431,13 @@ void print_memory()
     printf("\n");
 
     // Count the number of nodes in a linked list
-    int cnt = 0;
+    int count = 0;
     current = head;
     while ( current != NULL) {
-        cnt++;
+        count++;
         current = current->next;
     }
-    printf("The number of nodes in the list is: %d\n", cnt);
+    printf("The number of nodes in the list is: %d\n", count);
 }
 
 /* Use this function to track memory allocation performance.  
