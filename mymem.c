@@ -168,7 +168,6 @@ MemList* findFirstFit(size_t requested) {
     return NULL;
 }
 
-//TODO: implement next fit algorithm
 MemList* findNextFit(size_t requested)
 {
     MemList *current = next;
