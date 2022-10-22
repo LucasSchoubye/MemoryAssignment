@@ -76,7 +76,7 @@ void *mymalloc(size_t requested)
 	  case Worst:
 	            return allocateMem(findWorstFit(requested),requested);
 	  case Next:
-	            return NULL;
+                return allocateMem(findNextFit(requested),requested);
 	  }
 	return NULL;
 }
@@ -159,31 +159,39 @@ MemList* findFirstFit(size_t requested) {
     MemList *current = head;
 
     while(current != NULL) {
-        if(current->alloc == 0 && current->size >= requested) {
+        if (current->alloc == 0 && current->size >= requested) {
             firstBlockPtr = current;
+            return firstBlockPtr;
+        }
+        current = current->next;
+    }
+}
+
+// returns NULL pointer if no eligible block is found, otherwise returns pointer to the block to allocate
+MemList* findNextFit(size_t requested) {
+    MemList *nextBlockPtr = NULL;
+    MemList *current = head;
+
+    while(current != head) {
+        if(current->alloc == 0 && current->size >= requested) {
+            nextBlockPtr = current;
         }
         current = current->next;
     }
 
-    return firstBlockPtr;
-}
-
-//TODO: implement next fit algorithm
-MemList* findNextFit(size_t requested) {
-    return NULL;
+    return nextBlockPtr;
 }
 
 /* Frees a block of memory previously allocated by mymalloc. */
 void myfree(void *block)
 {
     MemList *freeing = getStructPtr(block); //Get the pointer for the struct corresponding to the mem location ptr
-    if (freeing->alloc == 0) //If the block isn't in use, return
+    if ((freeing != NULL) && (freeing->alloc == 0)) //If the block isn't in use, return
         return;
 
-    free(block); //Frees the memory associated with the block
     freeing->alloc = 0;
 
-    if ((freeing->prev != NULL) && (freeing->prev->alloc == 0)) { //If there is a previous, free block, combine them
+    if ((freeing->prev != NULL) && (freeing->prev != tail) && (freeing->prev->alloc == 0)) { //If there is a previous, free block in a non-circular manner, combine them
         MemList *left = freeing->prev;
         if (left->prev != NULL) { //If the left block isn't the first
             left->prev->next = freeing; //Update links
@@ -194,10 +202,13 @@ void myfree(void *block)
         }
         freeing->ptr = left->ptr; //Update memory location ptr
         freeing->size += left->size; //Add the size of the joined blocks
+        if (left == next) { //If the next pointer is pointing at the link about to be deleted, move it
+            next = freeing;
+        }
         free(left);
     }
 
-    if ((freeing->next != NULL) && (freeing->next->alloc == 0)) { //If there is a next, free block, combine them
+    if ((freeing->next != NULL) && (freeing->next != head) && (freeing->next->alloc == 0)) { //If there is a next, free block in a non-circular manner, combine them
         MemList *right = freeing->next;
         if (right->next != NULL) { //If the right block isn't the last
             right->next->prev = freeing;  //Update links
@@ -207,6 +218,9 @@ void myfree(void *block)
             tail = freeing; //Update head
         }
         freeing->size += right->size; //Add the size of the joined blocks
+        if (right == next) { //If the next pointer is pointing at the link about to be deleted, move it
+            next = freeing;
+        }
         free(right);
     }
 }
@@ -253,45 +267,45 @@ void freeProgramMemory() {
 int mem_holes()
 {
     MemList *current = head;
-    int count = 0;
+    int cnt = 0;
     while ( current != NULL ) {
-        if ((int)current->alloc == 0) // if the current node's alloc is 0, add to the count
-            count++;
+        if ((int)current->alloc == 0)
+            cnt++;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-	return count;
+	return cnt;
 }
 
 /* Get the number of bytes allocated */
 int mem_allocated()
 {
     MemList *current = head;
-    int countBytes = 0;
+    int cntBytes = 0;
     while ( current != NULL) {
-        if ((int)current->alloc == 1) // if the current node's alloc is 1, add it's size
-            countBytes += current->size;
+        if ((int)current->alloc == 1)
+            cntBytes += current->size;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-    return countBytes;
+    return cntBytes;
 }
 
 /* Number of non-allocated bytes */
 int mem_free()
 {
     MemList *current = head;
-    int countBytes = 0;
+    int cntBytes = 0;
     while ( current != NULL) {
-        if ((int)current->alloc == 0) // if the current node's alloc is 0, add it's size
-            countBytes += current->size;
+        if ((int)current->alloc == 0)
+            cntBytes += current->size;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-	return countBytes;
+	return cntBytes;
 }
 
 /* Number of bytes in the largest contiguous area of unallocated memory */
@@ -417,13 +431,13 @@ void print_memory()
     printf("\n");
 
     // Count the number of nodes in a linked list
-    int count = 0;
+    int cnt = 0;
     current = head;
     while ( current != NULL) {
-        count++;
+        cnt++;
         current = current->next;
     }
-    printf("The number of nodes in the list is: %d\n", count);
+    printf("The number of nodes in the list is: %d\n", cnt);
 }
 
 /* Use this function to track memory allocation performance.  
@@ -468,21 +482,21 @@ void try_mymem(int argc, char **argv) {
 	
 }
 
-//int main()
-//{
-//    initmem(First,500);
-//    mymalloc(100);
-//    mymalloc(80);
-//    mymalloc(220);
-//    mymalloc(99);
-//    mymalloc(2); // this should not be allocated - not enough space
-//
-//    print_memory();
-//    printf("number of allocated bytes: %d",mem_allocated());
-//    printf("\nnumber of non-allocated bytes: %d",mem_free());
-//    printf("\nnumber of holes: %d\n",mem_holes());
-//
-//
-//    freeProgramMemory();
-//
-//}
+int main()
+{
+    initmem(Next, 500);
+    mymalloc(100);
+    mymalloc(80);
+    mymalloc(220);
+    mymalloc(99);
+    mymalloc(2); // this should not be allocated - not enough space
+
+    print_memory();
+    printf("number of allocated bytes: %d",mem_allocated());
+    printf("\nnumber of non-allocated bytes: %d",mem_free());
+    printf("\nnumber of holes: %d\n",mem_holes());
+
+
+    freeProgramMemory();
+
+}
