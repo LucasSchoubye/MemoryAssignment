@@ -264,6 +264,8 @@ int mem_holes()
         if ((int)current->alloc == 0)
             cnt++;
         current = current->next;
+        if(current == head)
+            break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
 	return cnt;
 }
@@ -277,6 +279,8 @@ int mem_allocated()
         if ((int)current->alloc == 1)
             cntBytes += current->size;
         current = current->next;
+        if(current == head)
+            break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
     return cntBytes;
 }
@@ -290,6 +294,8 @@ int mem_free()
         if ((int)current->alloc == 0)
             cntBytes += current->size;
         current = current->next;
+        if(current == head)
+            break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
 	return cntBytes;
 }
