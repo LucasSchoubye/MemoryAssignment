@@ -253,45 +253,45 @@ void freeProgramMemory() {
 int mem_holes()
 {
     MemList *current = head;
-    int cnt = 0;
+    int count = 0;
     while ( current != NULL ) {
-        if ((int)current->alloc == 0)
-            cnt++;
+        if ((int)current->alloc == 0) // if the current node's alloc is 0, add to the count
+            count++;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-	return cnt;
+	return count;
 }
 
 /* Get the number of bytes allocated */
 int mem_allocated()
 {
     MemList *current = head;
-    int cntBytes = 0;
+    int countBytes = 0;
     while ( current != NULL) {
-        if ((int)current->alloc == 1)
-            cntBytes += current->size;
+        if ((int)current->alloc == 1) // if the current node's alloc is 1, add it's size
+            countBytes += current->size;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-    return cntBytes;
+    return countBytes;
 }
 
 /* Number of non-allocated bytes */
 int mem_free()
 {
     MemList *current = head;
-    int cntBytes = 0;
+    int countBytes = 0;
     while ( current != NULL) {
-        if ((int)current->alloc == 0)
-            cntBytes += current->size;
+        if ((int)current->alloc == 0) // if the current node's alloc is 0, add it's size
+            countBytes += current->size;
         current = current->next;
         if(current == head)
             break;  // this will only happen if we have a circular list and have looped back to the beginning - so we should exit the loop
     }
-	return cntBytes;
+	return countBytes;
 }
 
 /* Number of bytes in the largest contiguous area of unallocated memory */
@@ -417,13 +417,13 @@ void print_memory()
     printf("\n");
 
     // Count the number of nodes in a linked list
-    int cnt = 0;
+    int count = 0;
     current = head;
     while ( current != NULL) {
-        cnt++;
+        count++;
         current = current->next;
     }
-    printf("The number of nodes in the list is: %d\n", cnt);
+    printf("The number of nodes in the list is: %d\n", count);
 }
 
 /* Use this function to track memory allocation performance.  
@@ -468,21 +468,21 @@ void try_mymem(int argc, char **argv) {
 	
 }
 
-int main()
-{
-    initmem(First,500);
-    mymalloc(100);
-    mymalloc(80);
-    mymalloc(220);
-    mymalloc(99);
-    mymalloc(2); // this should not be allocated - not enough space
-
-    print_memory();
-    printf("number of allocated bytes: %d",mem_allocated());
-    printf("\nnumber of non-allocated bytes: %d",mem_free());
-    printf("\nnumber of holes: %d\n",mem_holes());
-
-
-    freeProgramMemory();
-
-}
+//int main()
+//{
+//    initmem(First,500);
+//    mymalloc(100);
+//    mymalloc(80);
+//    mymalloc(220);
+//    mymalloc(99);
+//    mymalloc(2); // this should not be allocated - not enough space
+//
+//    print_memory();
+//    printf("number of allocated bytes: %d",mem_allocated());
+//    printf("\nnumber of non-allocated bytes: %d",mem_free());
+//    printf("\nnumber of holes: %d\n",mem_holes());
+//
+//
+//    freeProgramMemory();
+//
+//}
