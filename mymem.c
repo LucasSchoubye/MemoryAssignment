@@ -50,8 +50,14 @@ void initmem(strategies strategy, size_t sz)
     // initialize values
     head->size = (int) mySize;
     head->alloc = 0;
-    head->next = NULL;
-    head->prev = NULL;
+
+    if (myStrategy == Next) {
+        head->next = head;
+        head->prev = head;
+    } else {
+        head->next = NULL;
+        head->prev = NULL;
+    }
     head->ptr = myMemory;
 }
 
@@ -486,12 +492,12 @@ void try_mymem(int argc, char **argv) {
 	
 }
 
-int main()
-{
-    char *temp = "Next";
-    char ** args = &temp;
-    try_mymem(1, args);
-
-    freeProgramMemory();
-
-}
+//int main()
+//{
+//    char *temp = "Next";
+//    char ** args = &temp;
+//    try_mymem(1, args);
+//
+//    freeProgramMemory();
+//
+//}
