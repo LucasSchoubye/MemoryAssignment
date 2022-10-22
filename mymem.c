@@ -171,30 +171,16 @@ MemList* findFirstFit(size_t requested) {
 //TODO: implement next fit algorithm
 MemList* findNextFit(size_t requested)
 {
-    //MemList *current = next;
-    MemList *startBlockPtr = next;
-    MemList *nextBlockPtr = NULL;
+    MemList *current = next;
+    while(current != NULL) {
+        if (current->alloc == 0 && current->size >= requested)
+            return current;
+        current = current->next;
 
-    if (next->next != NULL) {
-        next = next->next;
-        while(next != startBlockPtr )
-        {
-            printf("Here \n");
-            if(next->alloc == 0 && next->size >= requested)
-            {
-                //nextBlockPtr = next;
-                return next;
-            }
-            next = next->next;
-        }
+        if (current == next)
+            break;  // this will only happen when we have a circular list and have looped back to where we started from
     }
-    else
-    {
-        printf("Else Here \n");
-        nextBlockPtr = startBlockPtr;
-    }
-
-    return nextBlockPtr;
+    return NULL;
 }
 
 /* Frees a block of memory previously allocated by mymalloc. */
