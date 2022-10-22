@@ -183,7 +183,7 @@ void myfree(void *block)
     free(block); //Frees the memory associated with the block
     freeing->alloc = 0;
 
-    if ((freeing->prev != NULL) && (freeing->prev->alloc == 0)) { //If there is a previous, free block, combine them
+    if ((freeing->prev != NULL) && (freeing->prev != tail) && (freeing->prev->alloc == 0)) { //If there is a previous, free block in a non-circular manner, combine them
         MemList *left = freeing->prev;
         if (left->prev != NULL) { //If the left block isn't the first
             left->prev->next = freeing; //Update links
@@ -197,7 +197,7 @@ void myfree(void *block)
         free(left);
     }
 
-    if ((freeing->next != NULL) && (freeing->next->alloc == 0)) { //If there is a next, free block, combine them
+    if ((freeing->next != NULL) && (freeing->next != head) && (freeing->next->alloc == 0)) { //If there is a next, free block in a non-circular manner, combine them
         MemList *right = freeing->next;
         if (right->next != NULL) { //If the right block isn't the last
             right->next->prev = freeing;  //Update links
