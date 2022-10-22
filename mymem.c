@@ -194,6 +194,9 @@ void myfree(void *block)
         }
         freeing->ptr = left->ptr; //Update memory location ptr
         freeing->size += left->size; //Add the size of the joined blocks
+        if (left == next) { //If the next pointer is pointing at the link about to be deleted, move it
+            next = freeing;
+        }
         free(left);
     }
 
@@ -207,6 +210,9 @@ void myfree(void *block)
             tail = freeing; //Update head
         }
         freeing->size += right->size; //Add the size of the joined blocks
+        if (right == next) { //If the next pointer is pointing at the link about to be deleted, move it
+            next = freeing;
+        }
         free(right);
     }
 }
