@@ -125,9 +125,6 @@ void* allocateMem(MemList *allocatedBlock, size_t requestedSize) {
     }
     next = allocatedBlock->next;
 
-    if(myStrategy == Next && next == NULL) // this is to ensure that the global *next is never null under nextFit
-        next = head;                       // this could occur if after init, the whole block is allocated all at once
-
     return allocatedBlock->ptr;
 }
 
@@ -192,20 +189,19 @@ MemList* findNextFit(size_t requested)
 void myfree(void *block)
 {
     MemList *freeing = getStructPtr(block); //Get the pointer for the struct corresponding to the mem location ptr
-    if ((freeing != NULL) && (freeing->alloc == 0)) //If the block isn't in use, return
+    if (freeing == NULL || freeing->alloc == 0) //If the block isn't in use, return
         return;
 
     freeing->alloc = 0;
 
-    if ((freeing->prev != NULL) && (freeing->prev != tail) && (freeing->prev->alloc == 0)) { //If there is a previous, free block in a non-circular manner, combine them
+    if (freeing->prev != NULL && freeing != head && freeing->prev->alloc == 0) { //If there is a previous, free block in a non-circular manner, combine them
         MemList *left = freeing->prev;
-        if (left->prev != NULL) { //If the left block isn't the first
+        if (left->prev != NULL) { //If the left block isn't null - either because it's the head in a non-circular list, or any node in a circular one
             left->prev->next = freeing; //Update links
-            freeing->prev = left->prev;
-        } else {
-            freeing->prev = NULL; //Update link
-            head = freeing; //Update head
         }
+        if (left == head)
+            head = freeing; //Update head
+        freeing->prev = left->prev;
         freeing->ptr = left->ptr; //Update memory location ptr
         freeing->size += left->size; //Add the size of the joined blocks
         if (left == next) { //If the next pointer is pointing at the link about to be deleted, move it
@@ -214,15 +210,14 @@ void myfree(void *block)
         free(left);
     }
 
-    if ((freeing->next != NULL) && (freeing->next != head) && (freeing->next->alloc == 0)) { //If there is a next, free block in a non-circular manner, combine them
+    if ((freeing->next != NULL) && (freeing != tail) && (freeing->next->alloc == 0)) { //If there is a next, free block in a non-circular manner, combine them
         MemList *right = freeing->next;
-        if (right->next != NULL) { //If the right block isn't the last
+        if (right->next != NULL) { //If the right block isn't the last - either because it's the tail in a non-circular list, or any node in a circular one
             right->next->prev = freeing;  //Update links
-            freeing->next = right->next;
-        } else {
-            freeing->next = NULL; //Update link
-            tail = freeing; //Update head
         }
+        if (right == tail)
+            tail = freeing; //Update tail
+        freeing->next = right->next;
         freeing->size += right->size; //Add the size of the joined blocks
         if (right == next) { //If the next pointer is pointing at the link about to be deleted, move it
             next = freeing;
@@ -480,7 +475,8 @@ void try_mymem(int argc, char **argv) {
 	initmem(strat,500);
 	
 	a = mymalloc(100);
-	b = mymalloc(100);
+    myfree(a);
+    b = mymalloc(100);
 	c = mymalloc(100);
 	myfree(b);
 	d = mymalloc(50);
