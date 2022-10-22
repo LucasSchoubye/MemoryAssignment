@@ -427,6 +427,8 @@ void print_memory()
     while ( current != NULL) {
         printf("allocStatus : %d\tsize: %d\n", current->alloc,current->size);
         current = current->next;
+        if(current == head) // circular list
+            break;
     }
     printf("\n");
 
@@ -436,6 +438,8 @@ void print_memory()
     while ( current != NULL) {
         count++;
         current = current->next;
+        if(current == head) // circular list
+            break;
     }
     printf("The number of nodes in the list is: %d\n", count);
 }
@@ -482,21 +486,12 @@ void try_mymem(int argc, char **argv) {
 	
 }
 
-//int main()
-//{
-//    initmem(Next, 500);
-//    mymalloc(100);
-//    mymalloc(80);
-//    mymalloc(220);
-//    mymalloc(99);
-//    mymalloc(2); // this should not be allocated - not enough space
-//
-//    print_memory();
-//    printf("number of allocated bytes: %d",mem_allocated());
-//    printf("\nnumber of non-allocated bytes: %d",mem_free());
-//    printf("\nnumber of holes: %d\n",mem_holes());
-//
-//
-//    freeProgramMemory();
-//
-//}
+int main()
+{
+    char *temp = "Next";
+    char ** args = &temp;
+    try_mymem(1, args);
+
+    freeProgramMemory();
+
+}
