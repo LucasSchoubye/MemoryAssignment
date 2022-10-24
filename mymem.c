@@ -4,9 +4,6 @@
 #include <assert.h>
 #include "mymem.h"
 
-/* The main structure for implementing memory allocation.
- * You may change this to fit your implementation.
- */
 
 strategies myStrategy = NotSet;    // Current strategy
 
@@ -108,7 +105,7 @@ void* allocateMem(MemList *allocatedBlock, size_t requestedSize) {
         // initialize newBlock data
         newBlock->size = allocatedBlock->size - (int) requestedSize;
         newBlock->alloc = 0;
-        newBlock->ptr = allocatedBlock->ptr + requestedSize; // the new block's starting location is oldBlockLocation + oldBlockSize
+        newBlock->ptr = allocatedBlock->ptr + requestedSize; // the new block's starting location is oldBlockLocation + requested size
 
         // update the size of the allocatedBlock
         allocatedBlock->size = (int) requestedSize;
@@ -171,8 +168,7 @@ MemList* findFirstFit(size_t requested) {
     return NULL;
 }
 
-MemList* findNextFit(size_t requested)
-{
+MemList* findNextFit(size_t requested) {
     MemList *current = next;
     while(current != NULL) {
         if (current->alloc == 0 && current->size >= requested)
@@ -189,39 +185,45 @@ MemList* findNextFit(size_t requested)
 void myfree(void *block)
 {
     MemList *freeing = getStructPtr(block); //Get the pointer for the struct corresponding to the mem location ptr
-    if (freeing == NULL || freeing->alloc == 0) //If the block isn't in use, return
+    if (freeing == NULL || freeing->alloc == 0) //If the block is null or if it isn't in use, return
         return;
 
     freeing->alloc = 0;
 
     if (freeing->prev != NULL && freeing != head && freeing->prev->alloc == 0) { //If there is a previous, free block in a non-circular manner, combine them
         MemList *left = freeing->prev;
-        if (left->prev != NULL) { //If the left block isn't null (either because it's a non-head node in a non-circular list, or any node in a circular one)
-            left->prev->next = freeing; //Update links
-        }
-        if (left == head)
-            head = freeing; //Update head
+
+        //Update linkages (to remove the block called "left")
+        if (left->prev != NULL)
+            left->prev->next = freeing;
         freeing->prev = left->prev;
+
         freeing->ptr = left->ptr; //Update memory location ptr
         freeing->size += left->size; //Add the size of the joined blocks
-        if (left == next) { //If the next pointer is pointing at the link about to be deleted, move it
+
+        if (left == head)  //If the global head pointer is pointing at the link about to be deleted, update it
+            head = freeing;
+        if (left == next) //If the global next pointer is pointing at the link about to be deleted, update it
             next = freeing;
-        }
+
         free(left);
     }
 
     if ((freeing->next != NULL) && (freeing != tail) && (freeing->next->alloc == 0)) { //If there is a next, free block in a non-circular manner, combine them
         MemList *right = freeing->next;
-        if (right->next != NULL) { //If the right block isn't null (either because it's a non-tail node in a non-circular list, or any node in a circular one)
-            right->next->prev = freeing;  //Update links
-        }
-        if (right == tail)
-            tail = freeing; //Update tail
+
+        //Update linkages (to remove the block called "right")
+        if (right->next != NULL)
+            right->next->prev = freeing;
         freeing->next = right->next;
+
         freeing->size += right->size; //Add the size of the joined blocks
-        if (right == next) { //If the next pointer is pointing at the link about to be deleted, move it
+
+        if (right == tail) //If the global head pointer is pointing at the link about to be deleted, update it
+            tail = freeing;
+        if (right == next)  //If the global next pointer is pointing at the link about to be deleted, update it
             next = freeing;
-        }
+
         free(right);
     }
 }
@@ -231,6 +233,7 @@ void myfree(void *block)
 MemList* getStructPtr(void *memLocation) {
     if(memLocation == NULL || head == NULL)
         return NULL;
+
     MemList *memStruct = head;
     while(memStruct != NULL) { // traverse the list to find the relevant block whose ptr = *memLocation
         if(memStruct->ptr == memLocation)
@@ -353,11 +356,11 @@ char mem_is_alloc(void *ptr)
     return 0;
 }
 
+
 /* 
  * Feel free to use these functions, but do not modify them.  
  * The test code uses them, but you may find them useful.
  */
-
 
 //Returns a pointer to the memory pool.
 void *mem_pool()
@@ -428,7 +431,7 @@ void print_memory()
     while ( current != NULL) {
         printf("allocStatus : %d\tsize: %d\n", current->alloc,current->size);
         current = current->next;
-        if(current == head) // circular list
+        if(current == head) // break in case we have looped all the way through a circular list
             break;
     }
     printf("\n");
@@ -439,7 +442,7 @@ void print_memory()
     while ( current != NULL) {
         count++;
         current = current->next;
-        if(current == head) // circular list
+        if(current == head) // break in case we have looped all the way through a circular list
             break;
     }
     printf("The number of nodes in the list is: %d\n", count);
